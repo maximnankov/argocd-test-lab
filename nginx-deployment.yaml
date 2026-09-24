@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-secure-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-api
+  template:
+    metadata:
+      labels:
+        app: secure-api
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
