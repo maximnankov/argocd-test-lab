@@ -6,12 +6,16 @@ metadata:
 data:
   filebeat.yml: |
     filebeat.inputs:
-    - type: container
+    - type: log
+      enabled: true
       paths:
-        - /var/log/containers/*{{ .Release.Name }}*.log
+        - /var/log/pods/*nginx*/*.log
+        - /var/log/pods/*httpbin*/*.log
 
-    cloud.id: "{{ .Values.elastic.cloudId }}"
-    cloud.auth: "elastic:{{ .Values.elastic.password }}"
+    output.elasticsearch:
+      hosts: ["{{ .Values.elastic.endpoint }}"]
+      username: "elastic"
+      password: "{{ .Values.elastic.password }}"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
