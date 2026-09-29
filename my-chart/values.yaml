@@ -8,6 +8,7 @@ image:
 service:
   type: ClusterIP
   port: 80
+  
 elastic:
   cloudId: "essu_WnpGWmFEZGhRVUk1YW1WRFpXbHVjbGRRTlZjNlUxaHVWR3RoUzNWNmVHUjBRak0xTVVsUU0xbE9kdz09AAAAAPDsQyc="
   password: "elastic"
