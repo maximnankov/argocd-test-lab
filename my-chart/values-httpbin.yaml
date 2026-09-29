@@ -8,3 +8,7 @@ image:
 service:
   type: ClusterIP
   port: 80
+
+elastic:
+  endpoint: "https://elastic.cloud"
+  password: "elastic"
