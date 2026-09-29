@@ -45,7 +45,7 @@ spec:
             privileged: true
           volumeMounts:
           - name: config
-            mountPath: /etc/filebeat/
+            mountPath: /etc/filebeat.yml
             subPath: filebeat.yml
           - name: varlog
             mountPath: /var/log
