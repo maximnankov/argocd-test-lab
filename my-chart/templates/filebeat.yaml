@@ -31,7 +31,7 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-filebeat
-      spec:
+    spec:
         terminationGracePeriodSeconds: 30
         containers:
         - name: filebeat
