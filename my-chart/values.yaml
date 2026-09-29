@@ -10,5 +10,5 @@ service:
   port: 80
   
 elastic:
-  cloudId: "https://my-elasticsearch-project-bf81b5.es.us-central1.gcp.elastic.cloud"
+  cloudId: "https://elastic.cloud"
   password: "elastic"
