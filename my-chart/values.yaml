@@ -10,5 +10,5 @@ service:
   port: 80
   
 elastic:
-  cloudId: "https://elastic.cloud"
+  endpoint: "https://elastic.cloud"
   password: "elastic"
