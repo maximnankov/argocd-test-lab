@@ -16,6 +16,7 @@ data:
       hosts: ["{{ .Values.elastic.endpoint }}"]
       username: "elastic"
       password: "{{ .Values.elastic.password }}"
+      protocol: "https"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -30,7 +31,7 @@ spec:
     metadata:
       labels:
         app: {{ .Release.Name }}-filebeat
-    spec:
+      spec:
         terminationGracePeriodSeconds: 30
         containers:
         - name: filebeat
@@ -52,7 +53,6 @@ spec:
           - name: varlibdockercontainers
             mountPath: /var/lib/docker/containers
             readOnly: true
-            
         volumes:
         - name: config
           configMap:
@@ -63,3 +63,4 @@ spec:
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
+
