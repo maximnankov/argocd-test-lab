@@ -13,7 +13,7 @@ spec:
         app: secure-api
     spec:
       containers:
-      - name: nginx
+      - name: ngink
         image: nginx:1.25.3
         ports:
         - containerPort: 80
