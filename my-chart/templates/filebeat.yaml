@@ -17,7 +17,6 @@ data:
       username: "elastic"
       password: "{{ .Values.elastic.password }}"
       protocol: "https"
-      index: "logs-generic-default"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
