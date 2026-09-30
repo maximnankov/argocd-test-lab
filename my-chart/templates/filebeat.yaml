@@ -13,11 +13,11 @@ data:
         - /var/log/pods/*httpbin*/*.log
 
     output.elasticsearch:
+      output.elasticsearch:
       hosts: ["{{ .Values.elastic.endpoint }}"]
-      username: "elastic"
-      password: "{{ .Values.elastic.password }}"
+      api_key: "{{ .Values.elastic.apiKey }}" # <-- Сменяме username/password с api_key
       protocol: "https"
-      index: "logs-generic-default"
+
 ---
 apiVersion: apps/v1
 kind: DaemonSet
