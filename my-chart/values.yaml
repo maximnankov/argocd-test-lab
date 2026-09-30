@@ -10,5 +10,6 @@ service:
   port: 80
   
 elastic:
-  endpoint: "https://elastic.cloud:9200"
-  password: "elastic"
+  endpoint: "https://my-elasticsearch-project-bf81b5.kb.us-central1.gcp.elastic.cloud/app/management/security/api_keys/" # вашият URL
+  apiKey: "bE15bThhQUJuaElSU1l4LW9vSkw6QmxCWTFEa051ZENXbk9Ddk9jakZIdw==" # вашият нов ключ
+
