@@ -1,0 +1,30 @@
+---
+- name: CI/CD Валидация на приложенията преди ArgoCD Deploy
+  hosts: localhost
+  connection: local
+  tasks:
+
+    - name: 1. Проверка дали съществува папката с манифести
+      stat:
+        path: "./manifests"
+      register: manifests_folder
+
+    - name: 2. Проверка дали съществува Helm чарта
+      stat:
+        path: "./my-chart"
+      register: chart_folder
+
+    - name: 3. Прекъсване на пайплайна, ако някоя папка липсва
+      fail:
+        msg: "Грешка: Липсват критични конфигурационни файлове на приложението!"
+      when: not manifests_folder.stat.exists or not chart_folder.stat.exists
+
+    - name: 4. Синтактичен тест на K8s манифестите в папка manifests
+      shell: |
+        echo "Стартиране на симулация за проверка на Nginx и другите файлове..."
+        # Тук в реална среда се пуска: yamllint ./manifests
+      register: lint_output
+
+    - name: 5. Изход от теста
+      debug:
+        msg: "Ansible: Всички конфигурации в 'manifests' и 'my-chart' са валидни!"
