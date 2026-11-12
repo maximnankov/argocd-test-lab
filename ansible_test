@@ -1,30 +1,39 @@
 ---
-- name: CI/CD Валидация на приложенията преди ArgoCD Deploy
+- name: Configure HashiCorp Vault Dynamic Secrets for K8s
   hosts: localhost
   connection: local
   tasks:
-
-    - name: 1. Проверка дали съществува папката с манифести
-      stat:
-        path: "./manifests"
-      register: manifests_folder
-
-    - name: 2. Проверка дали съществува Helm чарта
-      stat:
-        path: "./my-chart"
-      register: chart_folder
-
-    - name: 3. Прекъсване на пайплайна, ако някоя папка липсва
-      fail:
-        msg: "Грешка: Липсват критични конфигурационни файлове на приложението!"
-      when: not manifests_folder.stat.exists or not chart_folder.stat.exists
-
-    - name: 4. Синтактичен тест на K8s манифестите в папка manifests
+    - name: Enable Kubernetes Auth and Database Engine in Vault
       shell: |
-        echo "Стартиране на симулация за проверка на Nginx и другите файлове..."
-        # Тук в реална среда се пуска: yamllint ./manifests
-      register: lint_output
+        kubectl exec -n vault vault-0 -- sh -c '
+          export VAULT_TOKEN=root
+          
+          # 1. Активиране на Kubernetes автентикация
+          vault auth enable kubernetes || true
+          vault write auth/kubernetes/config \
+            kubernetes_host="https://default.svc"
 
-    - name: 5. Изход от теста
-      debug:
-        msg: "Ansible: Всички конфигурации в 'manifests' и 'my-chart' са валидни!"
+          # 2. Активиране на Database Secrets Engine
+          vault secrets enable database || true
+          vault write database/config/bank-postgres \
+            plugin_name=postgresql-database-plugin \
+            allowed_roles="readonly-role" \
+            connection_url="postgresql://{{username}}:{{password}}@postgres-svc.default.svc.cluster.local:5432/bankdb?sslmode=disable" \
+            username="vaultadmin" \
+            password="SuperSecretRootPass123"
+
+          # 3. Създаване на роля, която генерира временни потребители за 10 минути
+          vault write database/roles/readonly-role \
+            db_name=bank-postgres \
+            creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '\''{{password}}'\'' VALID UNTIL '\''{{expiration}}'\''; GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
+            default_ttl="10m" \
+            max_ttl="1h"
+
+          # 4. Политика и връзка с Kubernetes Service Account
+          echo "path \"database/creds/readonly-role\" { capabilities = [\"read\"] }" | vault policy write bank-api-policy -
+          vault write auth/kubernetes/role/bank-api-role \
+            bound_service_account_names=bank-api-sa \
+            bound_service_account_namespaces=default \
+            policies=bank-api-policy \
+            ttl=15m
+        '
