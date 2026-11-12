@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bank-api-sa
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-nginx-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-nginx-api
+  template:
+    metadata:
+      labels:
+        app: secure-nginx-api
+      annotations:
+        # Vault Agent инжектира тайните в RAM паметта на пода
+        ://hashicorp.com: "true"
+        ://hashicorp.com: "bank-api-role"
+        ://hashicorp.com-secret-db-creds.txt: "database/creds/readonly-role"
+        ://hashicorp.com-template-db-creds.txt: |
+          {{- with secret "database/creds/readonly-role" -}}
+          DB_USER={{ .Data.username }}
+          DB_PASS={{ .Data.password }}
+          {{- end }}
+    spec:
+      serviceAccountName: bank-api-sa
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-nginx-svc
+  namespace: default
+spec:
+  selector:
+    app: secure-nginx-api
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bank-api-ingress
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+spec:
+  tls:
+    - hosts:
+        - api.bank.local
+      secretName: api-gateway-tls-secret
+  rules:
+    - host: api.bank.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: secure-nginx-svc
+                port:
+                  number: 80
