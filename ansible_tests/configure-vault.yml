@@ -1,0 +1,39 @@
+---
+- name: Configure HashiCorp Vault Dynamic Secrets for K8s
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Enable Kubernetes Auth and Database Engine in Vault
+      shell: |
+        kubectl exec -n vault vault-0 -- sh -c '
+          export VAULT_TOKEN=root
+          
+          # 1. Активиране на Kubernetes автентикация
+          vault auth enable kubernetes || true
+          vault write auth/kubernetes/config \
+            kubernetes_host="https://default.svc"
+
+          # 2. Активиране на Database Secrets Engine
+          vault secrets enable database || true
+          vault write database/config/bank-postgres \
+            plugin_name=postgresql-database-plugin \
+            allowed_roles="readonly-role" \
+            connection_url="postgresql://{{username}}:{{password}}@postgres-svc.default.svc.cluster.local:5432/bankdb?sslmode=disable" \
+            username="vaultadmin" \
+            password="SuperSecretRootPass123"
+
+          # 3. Създаване на роля, която генерира временни потребители за 10 минути
+          vault write database/roles/readonly-role \
+            db_name=bank-postgres \
+            creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '\''{{password}}'\'' VALID UNTIL '\''{{expiration}}'\''; GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
+            default_ttl="10m" \
+            max_ttl="1h"
+
+          # 4. Политика и връзка с Kubernetes Service Account
+          echo "path \"database/creds/readonly-role\" { capabilities = [\"read\"] }" | vault policy write bank-api-policy -
+          vault write auth/kubernetes/role/bank-api-role \
+            bound_service_account_names=bank-api-sa \
+            bound_service_account_namespaces=default \
+            policies=bank-api-policy \
+            ttl=15m
+        '
